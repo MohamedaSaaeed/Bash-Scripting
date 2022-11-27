@@ -14,9 +14,9 @@ fi
 change_ssh_port () {
 if [[ $EUID != 0 ]]
         then
-                sudo sed -i "s/^#Port 22$/Port $port/g" /etc/ssh/sshd_config | grep Port
+                sudo sed -i "s/^#Port 22$/Port $1/g" /etc/ssh/sshd_config | grep Port
         else
-                sed -i  "s/^#Port 22$/Port $port/g" /etc/ssh/sshd_config | grep Port 
+                sed -i  "s/^#Port 22$/Port $1/g" /etc/ssh/sshd_config | grep Port 
         fi
         echo "Port number changed successfully"
 }
