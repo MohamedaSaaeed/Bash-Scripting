@@ -1,0 +1,17 @@
+mkdir ~/Reports
+
+cd ~/Reports
+
+for i in 01 03 05 08 10 12
+do
+        touch {01..31}-$i-2022.xls
+done
+
+for t in 04 06 07 09 11
+do
+        touch {01..30}-$t-2022.xls
+done
+
+touch {01..28}-02-2022.xls
+
+crontab -l | { cat; echo "0 00-05 * * * rsync -av $HOME/Reports $HOME/backups/"; }  | crontab -

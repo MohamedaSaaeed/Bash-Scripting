@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+check_root_privilages () {
+if (( $EUID != 0 ));
+then
+    echo "Please run as root"
+    exit
+else
+        echo "you have root privilages" 
+
+fi
+}
+
+change_ssh_port () {
+if [[ $EUID != 0 ]]
+        then
+                sudo sed -i "s/^#Port 22$/Port $port/g" /etc/ssh/sshd_config | grep Port
+        else
+                sed -i  "s/^#Port 22$/Port $port/g" /etc/ssh/sshd_config | grep Port 
+        fi
+        echo "Port number changed successfully"
+}
+
+disable_root_login () {
+if [[ $EUID != 0 ]] ;
+then
+        sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config | grep PermitRootLogin
+else
+        sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config | grep PermitRootLogin
+fi
+echo "root login disabled"
+}
+
+add_new_user () {
+if [[ $EUID != 0 ]] ;
+then
+        echo "please enter the new username:"
+        read new_user
+        sudo useradd $new_user
+        echo "$new_user added successfully"
+fi
+
+echo "Do you want this user to be sudoer?(1/0)" 
+read ans
+
+if [[ $ans -eq 0 ]]
+then
+        echo "$new_user added to normal users"
+fi
+
+if [[ $ans -eq 1 ]]
+
+then
+        if [[ $EUID != 0 ]]
+        then
+                echo "$new_user    ALL=(ALL)       ALL" | sudo EDITOR='tee -a' visudo -f /etc/sudoers
+        else
+                echo "$new_user    ALL=(ALL)       ALL" >> /etc/sudoers
+        fi
+        echo "$new_user added to sudoers"       
+fi
+}
+
+backup_with_crontab () {
+if [[ $EUID != 0 ]]     
+then
+        sudo crontab -l | { cat; echo "* * * * * rsync -av $HOME/$USER $HOME/backups/"; }  | crontab -
+else
+        crontab -l | { cat; echo "* * * * * rsync -av $HOME/$USER $HOME/backups/"; }  | crontab -
+fi
+echo "backup done"
+}
+

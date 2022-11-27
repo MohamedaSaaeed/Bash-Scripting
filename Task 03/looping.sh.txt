@@ -1,0 +1,36 @@
+#!/usr/bin/env bash     
+
+source ./Library03.sh
+
+#Printing_show_menu
+
+while true
+do
+GROUP=wheel
+     gr=$(groups $USER)
+        if grep -q 'wheel' <<< "$gr" || [ "$EUID" -eq 0 ] || [ "$(whoami)" == root ] || grep "$USER" "/etc/sudoers";
+        then
+        show_menu $1 $2 $3
+                read s
+                case $s in
+                        1) check_root_privilage;;
+                        2) change_ssh_port $1;;
+                        3) disable_root_login;;
+                        4) update_firewall_selinux;;
+                        5) add_newgroup;;
+                        6) add_newuser $2 $3;;
+                        7) create_2021reports;;
+                        8) change_reports_permissions;;
+                        9) system_update_updgrade;;
+                        10) epel_install;;
+                        11) fail2ban_install;;
+                        12) backup_reports;;
+                        13) adduser_manager;;
+                        14) sync_reports;;
+                        [^q]) echo "invalid input PLease choose Correct option (q to quit)";;
+                        q) exit
+                esac
+      else
+      echo "Only root or sudoers can run the script"
+      exit 1
+     

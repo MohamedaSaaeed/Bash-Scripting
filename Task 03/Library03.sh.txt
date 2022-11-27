@@ -1,0 +1,159 @@
+#!/usr/bin/env bash 
+
+check_root_privilage () {
+if (( $EUID != 0 ));
+then
+    echo "Please run as root"
+    exit
+else
+        echo "you have root privilages" 
+
+fi
+}
+
+
+change_ssh_port () {
+if [[ $EUID != 0 ]]
+then
+        sudo sed -i "s/^#Port 22$/Port $1/g" /etc/ssh/sshd_config | grep Port
+else
+        sed -i "s/^#Port 22$/Port $1/g" /etc/ssh/sshd_config | grep Port
+fi
+        echo "Port with $1 number changed successfully"
+}
+
+
+disable_root_login () {
+if [[ $EUID != 0 ]] ;
+then
+        sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config | grep PermitRootLogin
+else
+        sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config | grep PermitRootLogin
+fi
+echo "root login disabled"
+}
+
+
+update_firewall_selinux () {
+semanage port -a -t ssh_port_t -p tcp $1
+echo "SELINUX is updated to port $1"
+firewall-cmd --zone=public --add-port=$1/tcp --permanent
+sudo systemctl reload firewalld.service
+echo "firewall is updated to port $1"
+}
+
+
+add_newgroup () {
+sudo groupadd -g 20000 Audit
+echo "Audit group is added"
+}
+
+
+add_newuser () {
+exist=$(grep "^$1" /etc/passwd)
+        if grep -q "$1" <<< "$exist"
+        then
+                echo "$1 exist"
+        else
+        pass=$(perl -e 'print crypt($ARGV[0], "sprint")' $2)
+        sudo useradd -m -p "$pass" "$1" -g Audit
+                check_add=$(grep "^$1" /etc/passwd)
+        if grep -q "$1" <<< "$check_add"
+        then
+                echo "$1 Added to the system"
+        else
+        echo "Failed to add user..."
+        fi
+        fi
+}
+
+
+create_2021reports () {
+mkdir $HOME/$USER/reports
+
+cd $HOME/$USER/reports
+
+for i in 01 03 05 08 10 12
+do
+        touch {01..31}-$i-2021.xls
+done
+
+for t in 04 06 07 09 11
+do
+        touch {01..30}-$t-2021.xls
+done
+
+touch {01..28}-02-2021.xls
+echo "2021 reports created"
+}
+
+
+change_reports_permissions () {
+setfacl -m u:$USER:rw $HOME/reports
+setfacl -m g:$USER:rw $HOME/reports
+chmod 660 $HOME/reports
+echo "reports permissions changed"
+}
+
+
+system_update_upgrade () {
+sudo yum update -y
+echo "System Updated Successfully"
+sudo yum install dnf -y
+sudo dnf upgrade
+echo "dnf upgrade is done"
+}
+
+
+epel_install () {
+sudo yum install epel-release -y
+echo "Epel Installed Successfully"
+}
+
+
+fail2ban_install () {
+sudo yum install fail2ban -y
+echo "fail2ban is installed"
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+echo "fail2ban is enabled"
+}
+
+
+backup_reports () {
+mkdir -p $HOME/backups
+	echo "00 1 * * 1-5 tar -czf $HOME/backups/reports-$(date +%U)-$(date +%w).tar.gz $HOME/reports" > "$HOME/rbackup.txt"
+	crontab "$HOME/rbackup.txt"
+echo "reports backup done"
+}
+
+adduser_manager () { 
+sudo useradd manager -u 30000
+echo " manager user added"
+}
+
+
+sync_reports () {
+crontab -l | { cat; echo "* 2 * * 1-5   rsync -av $HOME/reports /home/manager/audit/reports/"; }  | crontab -
+echo "reports sync done"
+}
+
+
+show_menu() {
+echo "PLease Choose An option(press q to exit)"
+echo "1- check_root_privilage"
+echo "2- change_ssh_port $1"
+echo "3- disable_root_login"
+echo "4- update_firewall_selinux"
+echo "5- add_newgroup"
+echo "6- add_newuser $2 $3"
+echo "7- create_2021reports"
+echo "8- change_reports_permissions"
+echo "9- system_update_upgrade"
+echo "10- epel_install"
+echo "11- fail2ban_install"
+echo "12- backup_reports"
+echo "13- adduser_manager"
+echo "14- sync_reports"
+}
+    

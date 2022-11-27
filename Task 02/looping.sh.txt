@@ -1,0 +1,12 @@
+#! /usr/bin/env bash
+
+#Bonus 
+
+source ./Library02.sh
+
+while [ ! -f /tmp/file.txt ]
+do
+        sleep 3
+        echo "File is not exist"
+done
+echo "File exist"
