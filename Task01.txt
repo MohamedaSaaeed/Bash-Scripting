@@ -13,5 +13,6 @@ do
 done
 
 touch {01..28}-02-2022.xls
-
+echo "2022 reports done"
 crontab -l | { cat; echo "0 00-05 * * * rsync -av $HOME/Reports $HOME/backups/"; }  | crontab -
+echo "crontab done"
