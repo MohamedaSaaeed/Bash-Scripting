@@ -71,7 +71,7 @@ exist=$(grep "^$1" /etc/passwd)
 create_2021reports () {
 mkdir $HOME/$USER/reports
 
-cd $HOME/$USER/reports
+cd /$USER/reports
 
 for i in 01 03 05 08 10 12
 do
